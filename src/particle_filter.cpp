@@ -119,7 +119,6 @@ void ParticleFilter::dataAssociation(std::vector<LandmarkObs> predicted, std::ve
       }
     }
 
-    // set the observation's id to the nearest predicted landmark's id
     observations[i].id = map_id;
 	}
 
@@ -153,11 +152,9 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 		 float landmark_y = map_landmarks.landmark_list[j].y_f;
 		 int landmark_id = map_landmarks.landmark_list[j].id_i;
 
-		 // only consider landmarks within sensor range of the particle (rather than using the "dist" method considering a circular
-		 // region around the particle, this considers a rectangular region but is computationally faster)
+		 //check landmark in range of particles within a box
 		 if (fabs(landmark_x - particle_x) <= sensor_range && fabs(landmark_y - particle_y) <= sensor_range) {
 
-			 // add prediction to vector
 			 preds.push_back(LandmarkObs{ landmark_id, landmark_x, landmark_y });
 		 }
 	 }
@@ -198,7 +195,6 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 		 double std_y = std_landmark[1];
 		 double obs_weight = (1 / (2 * M_PI * std_x * std_y)) * exp(-(pow(pred_x - obs_x,2) / (2 * pow(std_x, 2)) + (pow(pred_y - obs_y,2)/(2 * pow(std_y, 2)))));
 
-		 // product of this obersvation weight with total observations weight
 		 particles[i].weight *= obs_weight;
 	 }
 	}
@@ -216,19 +212,18 @@ void ParticleFilter::resample() {
 	 weights.push_back(particles[i].weight);
  }
 
- // generate random starting index for resampling wheel
+ //Resample
  uniform_int_distribution<int> uniintdist(0, num_particles-1);
  auto index = uniintdist(gen);
 
- // get max weight
+ // Max weight
  double max_weight = *max_element(weights.begin(), weights.end());
 
- // uniform random distribution [0.0, max_weight)
+
  uniform_real_distribution<double> unirealdist(0.0, max_weight);
 
  double beta = 0.0;
 
- // spin the resample wheel!
  for (int i = 0; i < num_particles; i++) {
 	 beta += unirealdist(gen) * 2.0;
 	 while (beta > weights[index]) {
